@@ -1,0 +1,79 @@
+version: '3.7'
+
+x-common_settings: &common_settings
+  build:
+      context: .
+      dockerfile: containers/python/Dockerfile
+      args:
+        PYTHON_VERSION: '3.7.1'
+  volumes:
+    - .:/app:cached
+  tty: true
+
+x-blockchain_common_settings: &blockchain_common_settings
+  <<: *common_settings
+  entrypoint: './containers/python/blockchain_server_entrypoint.sh'
+
+services:
+  blockchain_server1:
+    <<: *blockchain_common_settings
+    environment:
+      PORT: 5001
+    networks:
+      app_net:
+        ipv4_address: 172.16.238.1
+    ports:
+      - 5001:5001
+
+  blockchain_server2:
+    <<: *blockchain_common_settings
+    environment:
+      PORT: 5002
+    networks:
+      app_net:
+        ipv4_address: 172.16.238.2
+    ports:
+      - 5002:5002
+
+  blockchain_server3:
+    <<: *blockchain_common_settings
+    environment:
+      PORT: 5003
+    networks:
+      app_net:
+        ipv4_address: 172.16.238.3
+    ports:
+      - 5003:5003
+
+  wallet_server:
+    <<: *common_settings
+    environment:
+      PORT: 8080
+    entrypoint: './containers/python/wallet_server_entrypoint.sh'
+    networks:
+      app_net:
+        ipv4_address: 172.16.238.10
+    ports:
+      - 8080:8080
+
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: containers/python/Dockerfile
+  #     args:
+  #       PYTHON_VERSION: '3.7.1'
+  #   ports:
+  #     - 5000-5002:5000-5002
+  #     - 8080:8080
+  #   volumes:
+  #     - .:/app:cached
+  #   tty: true
+
+networks:
+  app_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.100
